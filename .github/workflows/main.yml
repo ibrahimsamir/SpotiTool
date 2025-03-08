@@ -29,9 +29,9 @@ jobs:
         run: |
           echo "BEATPORT_USERNAME=${{ secrets.BEATPORT_USERNAME }}" >> $GITHUB_ENV
           echo "BEATPORT_PASSWORD=${{ secrets.BEATPORT_PASSWORD }}" >> $GITHUB_ENV
-          echo "SPOTIPY_CLIENT_ID=${{ secrets.SPOTIPY_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "SPOTIPY_CLIENT_SECRET=${{ secrets.SPOTIPY_CLIENT_SECRET }}" >> $GITHUB_ENV
-          echo "SPOTIPY_REDIRECT_URI=http://127.0.0.1:9090" >> $GITHUB_ENV
+          echo "SPOTIFY_CLIENT_ID=${{ secrets.SPOTIPY_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIPY_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "SPOTIFY_REDIRECT_URI=http://127.0.0.1:9090" >> $GITHUB_ENV
 
       - name: Run SpotiTool script
         run: |
