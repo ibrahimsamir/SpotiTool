@@ -1,0 +1,4 @@
+.env
+/venv
+last_scan.json
+.idea
