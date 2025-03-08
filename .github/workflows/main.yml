@@ -1,0 +1,44 @@
+name: Beatport to Spotify Sync
+
+on:
+  workflow_dispatch:  # Allows manual triggering
+  schedule:
+    - cron: "0 6 * * 5"  # Runs every Friday at 06:00 UTC
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Last Scan File (if exists)
+        continue-on-error: true  # Prevent failure if file is missing
+        uses: actions/download-artifact@v4
+        with:
+          name: last_scan
+          path: .
+
+      - name: Ensure last_scan.json exists
+        run: |
+          if [ ! -f last_scan.json ]; then
+            echo '{"last_scan_date": "2025-03-07"}' > last_scan.json
+          fi
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Script
+        run: python SpotiTool.py
+
+      - name: Upload Updated Last Scan File
+        uses: actions/upload-artifact@v4
+        with:
+          name: last_scan
+          path: last_scan.json
