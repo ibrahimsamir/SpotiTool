@@ -1,4 +1,19 @@
+# Environment Variables
 .env
+
+# Virtual Environment
 /venv
+/.venv
+
+# Local Files
 last_scan.json
-.idea
+
+# IDE Files
+.idea/
+/.vscode/
+
+# Bytecode & Caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
