@@ -1,26 +1,30 @@
 import spotipy
+from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 import os
 
-from dotenv import load_dotenv
-
 load_dotenv()
 
-# Set your Spotify credentials (replace with your actual values)
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_REDIRECT_URI = "http://127.0.0.1:9090"
-SCOPE = "playlist-modify-public playlist-modify-private"
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 
-# Get token
+scope = "playlist-modify-public playlist-modify-private"
+
 auth_manager = SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
     client_secret=SPOTIFY_CLIENT_SECRET,
     redirect_uri=SPOTIFY_REDIRECT_URI,
-    scope="playlist-modify-public playlist-modify-private"
+    scope=scope
 )
+
 sp = spotipy.Spotify(auth_manager=auth_manager)
 
-token = sp.auth_manager.get_access_token(as_dict=False)
+# Retrieve and print the refresh token
+token_info = auth_manager.get_cached_token()
 
-print(f"Your refresh token: {token}")
+if token_info:
+    print(f"✅ Access Token: {token_info['access_token']}")
+    print(f"✅ Refresh Token: {token_info['refresh_token']}")  # Make sure this gets printed!
+else:
+    print("❌ No token found. Try re-authorizing the app.")
