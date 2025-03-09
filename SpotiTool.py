@@ -11,6 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from typing import TextIO
 
 # Load environment variables
 load_dotenv()
@@ -26,17 +27,24 @@ if not BEATPORT_USERNAME or not BEATPORT_PASSWORD:
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
+SPOTIFY_REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
 
 # Authenticate with Spotify
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=SPOTIFY_CLIENT_ID,
-    client_secret=SPOTIFY_CLIENT_SECRET,
-    redirect_uri=SPOTIFY_REDIRECT_URI,
-    scope="playlist-modify-public playlist-modify-private"
+sp = spotipy.Spotify(
+    auth_manager=SpotifyOAuth(
+        client_id=SPOTIFY_CLIENT_ID,
+        client_secret=SPOTIFY_CLIENT_SECRET,
+        redirect_uri=SPOTIFY_REDIRECT_URI,
+        scope="playlist-modify-public playlist-modify-private",
+        cache_path=".spotify_cache"
     ),
     requests_timeout=30,  # Increase timeout to 30 seconds
     retries=5  # Retry failed requests up to 5 times
-    )
+)
+
+# Ensure refresh token is used
+if not sp.auth_manager.validate_token(sp.auth_manager.get_cached_token()):
+    sp.auth_manager.refresh_access_token(SPOTIFY_REFRESH_TOKEN)
 
 # Fetch the current Spotify user ID
 user_info = sp.current_user()
@@ -139,8 +147,8 @@ driver.quit()
 # **3. Save Last Scan Date**
 if track_data:
     latest_date = max(track["Release Date"] for track in track_data if track["Release Date"] != "Unknown Date")
-    with open(LAST_SCAN_FILE, "w") as f:
-        json.dump({"last_scan_date": latest_date}, f)
+    with open(LAST_SCAN_FILE, "w", encoding="utf-8") as f:  # Fix type warning
+        json.dump({"last_scan_date": latest_date}, f, ensure_ascii=False)
 
 # **4. Create Playlist in Spotify**
 playlist_date = time.strftime("%y%m%d")  # YYMMDD format
@@ -168,32 +176,43 @@ if not playlist_id:
     playlist_id = playlist["id"]
     print(f"✅ New playlist created: {playlist['external_urls']['spotify']}")
 
-# **5. Add Tracks to Spotify Playlist**
+# **5. Safe Spotify Search with Retry**
+def safe_spotify_call(func, *args, retries=3, delay=5, **kwargs):
+    for attempt in range(retries):
+        try:
+            return func(*args, **kwargs)
+        except spotipy.exceptions.SpotifyException as e:
+            print(f"⚠️ Spotify API error ({e}). Retrying in {delay} seconds...")
+            time.sleep(delay)
+    print("❌ Spotify API request failed after multiple retries.")
+    return None
+
+# **6. Add Tracks to Spotify Playlist**
 spotify_tracks = []
 
 for track in track_data:
     query = f"{track['Track']} {track['Artist']}"
-    results = sp.search(q=query, type="track", limit=1)
+    results = safe_spotify_call(sp.search, q=query, type="track", limit=1)
 
-    if results["tracks"]["items"]:
+    if results and results["tracks"]["items"]:
         track_uri = results["tracks"]["items"][0]["uri"]
         spotify_tracks.append(track_uri)
     else:
         print(f"⚠️ Track not found on Spotify: {track['Track']} by {track['Artist']}")
 
-# Add tracks to the playlist in batches of 100
+# Add tracks in batches of 100
 BATCH_SIZE = 100
 
 if spotify_tracks:
     for i in range(0, len(spotify_tracks), BATCH_SIZE):
         batch = spotify_tracks[i:i + BATCH_SIZE]
-        sp.playlist_add_items(playlist_id, batch)
+        safe_spotify_call(sp.playlist_add_items, playlist_id, batch)
         print(f"✅ Added {len(batch)} tracks to {playlist_name} ({i + len(batch)}/{len(spotify_tracks)})")
 
     print(f"🎵 Successfully added {len(spotify_tracks)} tracks to {playlist_name}")
 else:
     print("⚠️ No matching tracks found on Spotify.")
 
-# **6. Output Results**
+# **7. Output Results**
 for t in track_data:
     print(f"{t['Track']} by {t['Artist']} (Released: {t['Release Date']}) -> {t['Track Link']}")
