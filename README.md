@@ -8,6 +8,13 @@ SpotiTool is a Python automation script that scrapes new releases from your "My 
 - Prevents duplicates from being added to the playlist
 - Runs on GitHub Actions for scheduled automation
 
+## Requirements
+- Python 3.10+
+- Selenium
+- Spotipy
+- WebDriver Manager
+- BeautifulSoup4
+
 ## Setup Instructions
 
 ### 1. Clone the Repository
