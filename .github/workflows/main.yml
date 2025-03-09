@@ -31,6 +31,7 @@ jobs:
           echo "BEATPORT_PASSWORD=${{ secrets.BEATPORT_PASSWORD }}" >> $GITHUB_ENV
           echo "SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}" >> $GITHUB_ENV
           echo "SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "SPOTIFY_REFRESH_TOKEN=${{ secrets.SPOTIFY_REFRESH_TOKEN }}" >> $GITHUB_ENV
           echo "SPOTIFY_REDIRECT_URI=http://127.0.0.1:9090" >> $GITHUB_ENV
 
       - name: Run SpotiTool script
