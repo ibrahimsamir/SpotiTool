@@ -11,6 +11,7 @@ last_scan.json
 # IDE Files
 .idea/
 /.vscode/
+*.iml
 
 # Bytecode & Caches
 __pycache__/
